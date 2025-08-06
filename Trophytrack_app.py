@@ -8,8 +8,12 @@ import os
 EXCEL_FILE = "trophy_tracker.xlsx"
 
 def load_excel():
+    if not os.path.exists(EXCEL_FILE):
+        return pd.DataFrame(), []
     workbook = pd.ExcelFile(EXCEL_FILE)
     game_sheets = [sheet for sheet in workbook.sheet_names if sheet not in ['Dashboard', 'GameTags', 'Data', 'Checklist', 'TrophyDetails', 'Lookup']]
+    if not game_sheets:
+        return pd.DataFrame(), []
     all_trophies = pd.concat([workbook.parse(sheet) for sheet in game_sheets], ignore_index=True)
     return all_trophies, game_sheets
 
