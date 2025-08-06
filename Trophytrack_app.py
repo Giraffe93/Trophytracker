@@ -154,9 +154,13 @@ if not all_trophies.empty:
         if selected_guide:
             filtered = filtered[filtered['Guide Available'].isin(selected_guide)]
         if checklist_required != "Any":
-        if 'Difficulty' in filtered.columns and pd.api.types.is_numeric_dtype(filtered['Difficulty']):
-            filtered = filtered[(filtered['Difficulty'] >= min_difficulty) & (filtered['Difficulty'] <= max_difficulty)]
-            filtered = filtered[filtered['Checklist Required'] == required]
+            # Filter by checklist requirement
+            required = True if checklist_required == "Yes" else False
+            if 'Checklist Required' in filtered.columns:
+                filtered = filtered[filtered['Checklist Required'] == required]
+            # Filter by difficulty inside this block if column exists
+            if 'Difficulty' in filtered.columns and pd.api.types.is_numeric_dtype(filtered['Difficulty']):
+                filtered = filtered[(filtered['Difficulty'] >= min_difficulty) & (filtered['Difficulty'] <= max_difficulty)]
         if (
             min_time is not None and max_time is not None and
             'Estimated Time' in filtered.columns and
