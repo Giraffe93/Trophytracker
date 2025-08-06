@@ -141,87 +141,90 @@ if not all_trophies.empty:
 
     elif st.session_state['page'] == "Planning":
         st.markdown("<h2 style='text-align: center;'>📝 Plan Your Session</h2>", unsafe_allow_html=True)
-        with st.expander("Filter & Sort Options", expanded=True):
-            trophy_types = all_trophies['Trophy Type'].dropna().unique().tolist()
-            selected_types = st.multiselect("Trophy Type", trophy_types, default=trophy_types)
-            consoles = all_trophies['Console'].dropna().unique().tolist()
-            selected_consoles = st.multiselect("Console", consoles, default=consoles)
-            dlc_options = all_trophies['DLC'].dropna().unique().tolist()
-            selected_dlc = st.multiselect("DLC", dlc_options, default=dlc_options)
-            guide_options = ["Yes", "No"]
-            selected_guide = st.multiselect("Guide Available", guide_options, default=guide_options)
-            checklist_required = st.selectbox("Checklist Required", ["Any", "Yes", "No"])
-            min_difficulty, max_difficulty = st.slider("Difficulty Range", 1, 10, (1, 5))
-            min_time, max_time = st.slider("Estimated Time (hrs)", 0, 100, (0, 10)) if 'Estimated Time' in all_trophies.columns else (None, None)
-            rarity_options = all_trophies['Rarity'].dropna().unique().tolist() if 'Rarity' in all_trophies.columns else []
-            selected_rarity = st.multiselect("Rarity", rarity_options, default=rarity_options) if rarity_options else []
-            session_types = all_trophies['Session Type'].dropna().unique().tolist()
-            selected_session = st.multiselect("Session Type", session_types, default=session_types)
-            multiplayer_only = st.checkbox("Multiplayer Only")
-            not_earned = st.checkbox("Show Only Not Earned")
-            trophy_name_search = st.text_input("Search Trophy Name")
-            description_search = st.text_input("Search Description")
-            # Sorting
-            sort_column = st.selectbox("Sort By", all_trophies.columns.tolist())
-            sort_ascending = st.radio("Sort Order", ["Ascending", "Descending"]) == "Ascending"
-        
-        filtered = all_trophies.copy()
-        if selected_types:
-            filtered = filtered[filtered['Trophy Type'].isin(selected_types)]
-        if selected_consoles:
-            filtered = filtered[filtered['Console'].isin(selected_consoles)]
-        if selected_dlc:
-            filtered = filtered[filtered['DLC'].isin(selected_dlc)]
-        if selected_guide:
-            filtered = filtered[filtered['Guide Available'].isin(selected_guide)]
-        if checklist_required != "Any":
-            # Filter by checklist requirement
-            required = True if checklist_required == "Yes" else False
-            if 'Checklist Required' in filtered.columns:
-                filtered = filtered[filtered['Checklist Required'] == required]
-            # Filter by difficulty inside this block if column exists
-            if 'Difficulty' in filtered.columns and pd.api.types.is_numeric_dtype(filtered['Difficulty']):
-                filtered = filtered[(filtered['Difficulty'] >= min_difficulty) & (filtered['Difficulty'] <= max_difficulty)]
-        if (
-            min_time is not None and max_time is not None and
-            'Estimated Time' in filtered.columns and
-            pd.api.types.is_numeric_dtype(filtered['Estimated Time'])
-        ):
-            filtered = filtered[(filtered['Estimated Time'] >= min_time) & (filtered['Estimated Time'] <= max_time)]
-            filtered = filtered[(filtered['Estimated Time'] >= min_time) & (filtered['Estimated Time'] <= max_time)]
-        if selected_rarity:
-            filtered = filtered[filtered['Rarity'].isin(selected_rarity)]
-        if selected_session:
-            filtered = filtered[filtered['Session Type'].isin(selected_session)]
-        if multiplayer_only:
-            filtered = filtered[filtered['Multiplayer'] == True]
-        if not_earned:
-            filtered = filtered[filtered['Date Earned'].isna()]
-        if trophy_name_search:
-            filtered = filtered[filtered['Trophy Name'].str.contains(trophy_name_search, case=False, na=False)]
-        if description_search:
-            filtered = filtered[filtered['Description'].str.contains(description_search, case=False, na=False)]
-        # Sorting
-        if sort_column in filtered.columns:
-            filtered = filtered.sort_values(by=sort_column, ascending=sort_ascending)
-        
-        st.subheader("🎯 Filtered & Sorted Trophy Opportunities")
-        st.dataframe(filtered)
-
-        if not filtered.empty:
-            selected_indices = st.multiselect(
-                "Select trophies for tonight's session:",
-                filtered.index,
-                format_func=lambda idx: f"{filtered.loc[idx, 'Game']} - {filtered.loc[idx, 'Trophy Name']}"
-            )
-            session_plan = filtered.loc[selected_indices] if selected_indices else pd.DataFrame()
-            st.write("Session Plan:")
-            st.dataframe(session_plan)
-            if not session_plan.empty and st.button("Save Session Plan"):
-                save_session_plan(session_plan)
-                st.success("Session plan saved! Switch to Game Night to interact with it.")
+        if 'Trophy Name' not in all_trophies.columns:
+            st.warning("The required column 'Trophy Name' is missing from your data. Please check your Excel file.")
         else:
-            st.info("No trophies match the selected filters.")
+            with st.expander("Filter & Sort Options", expanded=True):
+                trophy_types = all_trophies['Trophy Type'].dropna().unique().tolist() if 'Trophy Type' in all_trophies.columns else []
+                selected_types = st.multiselect("Trophy Type", trophy_types, default=trophy_types)
+                consoles = all_trophies['Console'].dropna().unique().tolist() if 'Console' in all_trophies.columns else []
+                selected_consoles = st.multiselect("Console", consoles, default=consoles)
+                dlc_options = all_trophies['DLC'].dropna().unique().tolist() if 'DLC' in all_trophies.columns else []
+                selected_dlc = st.multiselect("DLC", dlc_options, default=dlc_options)
+                guide_options = ["Yes", "No"]
+                selected_guide = st.multiselect("Guide Available", guide_options, default=guide_options)
+                checklist_required = st.selectbox("Checklist Required", ["Any", "Yes", "No"])
+                min_difficulty, max_difficulty = st.slider("Difficulty Range", 1, 10, (1, 5))
+                min_time, max_time = st.slider("Estimated Time (hrs)", 0, 100, (0, 10)) if 'Estimated Time' in all_trophies.columns else (None, None)
+                rarity_options = all_trophies['Rarity'].dropna().unique().tolist() if 'Rarity' in all_trophies.columns else []
+                selected_rarity = st.multiselect("Rarity", rarity_options, default=rarity_options) if rarity_options else []
+                session_types = all_trophies['Session Type'].dropna().unique().tolist() if 'Session Type' in all_trophies.columns else []
+                selected_session = st.multiselect("Session Type", session_types, default=session_types)
+                multiplayer_only = st.checkbox("Multiplayer Only")
+                not_earned = st.checkbox("Show Only Not Earned")
+                trophy_name_search = st.text_input("Search Trophy Name")
+                description_search = st.text_input("Search Description")
+                # Sorting
+                sort_column = st.selectbox("Sort By", all_trophies.columns.tolist())
+                sort_ascending = st.radio("Sort Order", ["Ascending", "Descending"]) == "Ascending"
+            
+            filtered = all_trophies.copy()
+            if selected_types and 'Trophy Type' in filtered.columns:
+                filtered = filtered[filtered['Trophy Type'].isin(selected_types)]
+            if selected_consoles and 'Console' in filtered.columns:
+                filtered = filtered[filtered['Console'].isin(selected_consoles)]
+            if selected_dlc and 'DLC' in filtered.columns:
+                filtered = filtered[filtered['DLC'].isin(selected_dlc)]
+            if selected_guide and 'Guide Available' in filtered.columns:
+                filtered = filtered[filtered['Guide Available'].isin(selected_guide)]
+            if checklist_required != "Any":
+                # Filter by checklist requirement
+                required = True if checklist_required == "Yes" else False
+                if 'Checklist Required' in filtered.columns:
+                    filtered = filtered[filtered['Checklist Required'] == required]
+                # Filter by difficulty inside this block if column exists
+                if 'Difficulty' in filtered.columns and pd.api.types.is_numeric_dtype(filtered['Difficulty']):
+                    filtered = filtered[(filtered['Difficulty'] >= min_difficulty) & (filtered['Difficulty'] <= max_difficulty)]
+            if (
+                min_time is not None and max_time is not None and
+                'Estimated Time' in filtered.columns and
+                pd.api.types.is_numeric_dtype(filtered['Estimated Time'])
+            ):
+                filtered = filtered[(filtered['Estimated Time'] >= min_time) & (filtered['Estimated Time'] <= max_time)]
+                filtered = filtered[(filtered['Estimated Time'] >= min_time) & (filtered['Estimated Time'] <= max_time)]
+            if selected_rarity and 'Rarity' in filtered.columns:
+                filtered = filtered[filtered['Rarity'].isin(selected_rarity)]
+            if selected_session and 'Session Type' in filtered.columns:
+                filtered = filtered[filtered['Session Type'].isin(selected_session)]
+            if multiplayer_only and 'Multiplayer' in filtered.columns:
+                filtered = filtered[filtered['Multiplayer'] == True]
+            if not_earned and 'Date Earned' in filtered.columns:
+                filtered = filtered[filtered['Date Earned'].isna()]
+            if trophy_name_search:
+                filtered = filtered[filtered['Trophy Name'].str.contains(trophy_name_search, case=False, na=False)]
+            if description_search and 'Description' in filtered.columns:
+                filtered = filtered[filtered['Description'].str.contains(description_search, case=False, na=False)]
+            # Sorting
+            if sort_column in filtered.columns:
+                filtered = filtered.sort_values(by=sort_column, ascending=sort_ascending)
+            
+            st.subheader("🎯 Filtered & Sorted Trophy Opportunities")
+            st.dataframe(filtered)
+
+            if not filtered.empty:
+                selected_indices = st.multiselect(
+                    "Select trophies for tonight's session:",
+                    filtered.index,
+                    format_func=lambda idx: f"{filtered.loc[idx, 'Game']} - {filtered.loc[idx, 'Trophy Name']}" if 'Game' in filtered.columns and 'Trophy Name' in filtered.columns else str(idx)
+                )
+                session_plan = filtered.loc[selected_indices] if selected_indices else pd.DataFrame()
+                st.write("Session Plan:")
+                st.dataframe(session_plan)
+                if not session_plan.empty and st.button("Save Session Plan"):
+                    save_session_plan(session_plan)
+                    st.success("Session plan saved! Switch to Game Night to interact with it.")
+            else:
+                st.info("No trophies match the selected filters.")
 
     elif st.session_state['page'] == "Game Night":
         st.markdown("<h2 style='text-align: center;'>🎮 Game Night Session</h2>", unsafe_allow_html=True)
@@ -279,93 +282,98 @@ if not all_trophies.empty:
     
     # New Section: Session Planning
     st.markdown("<h2 style='text-align: center;'>📅 Session Planning</h2>", unsafe_allow_html=True)
-    with st.expander("Select Trophies for Session", expanded=True):
-        session_trophies = st.multiselect(
-            "Select trophies for your session:",
-            all_trophies['Trophy Name']
-        )
-        session_df = all_trophies[all_trophies['Trophy Name'].isin(session_trophies)]
-        session_time = session_df['Estimated Time'].sum()
-        st.write(f"Total Session Estimated Time: {session_time} hrs")
-
-        # --- Time Breakdown by Trophy Category ---
-        if not session_df.empty:
-            st.subheader("Session Time Breakdown by Trophy Category")
-            category_breakdown = session_df.groupby('Trophy Category')['Estimated Time'].sum()
-            st.bar_chart(category_breakdown)
-
-            st.subheader("Session Time Breakdown by Game Run Type")
-        if not session_df.empty:
-            earned_count = session_df['Date Earned'].notna().sum()
-            total_count = len(session_df)
-            st.progress(earned_count / total_count if total_count else 0, text=f"{earned_count}/{total_count} trophies earned in session")
-        if not session_df.empty:
-            earned_count = session_df['Earned?'].eq('Yes').sum()
-            total_count = len(session_df)
-            st.progress(earned_count / total_count if total_count else 0, text=f"{earned_count}/{total_count} trophies earned in session")
-
-        with st.expander("Session Trophy Filters", expanded=False):
-            missable = st.checkbox("Show only Missable?", value=False)
-            collectible = st.checkbox("Show only Collectible?", value=False)
-            grindy = st.checkbox("Show only Grindy?", value=False)
-            dlc_only = st.checkbox("Show only DLC trophies?", value=False)
-            filtered_df = all_trophies.copy()
-            if missable:
-                filtered_df = filtered_df[filtered_df['Missable?'] == 'Yes']
-            if collectible:
-                filtered_df = filtered_df[filtered_df['Collectible?'] == 'Yes']
-            if grindy:
-                filtered_df = filtered_df[filtered_df['Grindy?'] == 'Yes']
-            if dlc_only and 'DLC' in filtered_df.columns:
-                filtered_df = filtered_df[filtered_df['DLC'].notna() & (filtered_df['DLC'] != "")]
+    if 'Trophy Name' not in all_trophies.columns:
+        st.warning("The required column 'Trophy Name' is missing from your data. Please check your Excel file.")
+    else:
+        with st.expander("Select Trophies for Session", expanded=True):
             session_trophies = st.multiselect(
                 "Select trophies for your session:",
-                filtered_df['Trophy Name']
+                all_trophies['Trophy Name']
             )
-            session_df = filtered_df[filtered_df['Trophy Name'].isin(session_trophies)]
-            session_time = session_df['Estimated Time'].sum()
+            session_df = all_trophies[all_trophies['Trophy Name'].isin(session_trophies)]
+            session_time = session_df['Estimated Time'].sum() if 'Estimated Time' in session_df.columns else 0
             st.write(f"Total Session Estimated Time: {session_time} hrs")
 
             # --- Time Breakdown by Trophy Category ---
-            if not session_df.empty:
+            if not session_df.empty and 'Trophy Category' in session_df.columns and 'Estimated Time' in session_df.columns:
                 st.subheader("Session Time Breakdown by Trophy Category")
                 category_breakdown = session_df.groupby('Trophy Category')['Estimated Time'].sum()
                 st.bar_chart(category_breakdown)
 
+            if not session_df.empty and 'Game Run Type' in session_df.columns and 'Estimated Time' in session_df.columns:
                 st.subheader("Session Time Breakdown by Game Run Type")
                 run_type_breakdown = session_df.groupby('Game Run Type')['Estimated Time'].sum()
                 st.bar_chart(run_type_breakdown)
 
-            # --- Progress Tracking for Session ---
-            if not session_df.empty:
+            if not session_df.empty and 'Date Earned' in session_df.columns:
+                earned_count = session_df['Date Earned'].notna().sum()
+                total_count = len(session_df)
+                st.progress(earned_count / total_count if total_count else 0, text=f"{earned_count}/{total_count} trophies earned in session")
+            if not session_df.empty and 'Earned?' in session_df.columns:
                 earned_count = session_df['Earned?'].eq('Yes').sum()
                 total_count = len(session_df)
                 st.progress(earned_count / total_count if total_count else 0, text=f"{earned_count}/{total_count} trophies earned in session")
-        
-        # New Section: Session Trophy Notes & Tips
-        if not session_df.empty:
-            st.write("Session Trophy Notes & Tips:")
-            for _, row in session_df.iterrows():
-                notes = row.get("Notes / Tips", "No notes available.")
-                st.markdown(f"**{row['Trophy Name']}**: {notes}")
-        
-        # New Feature: Trophy Name Indicators
-        def trophy_indicator(row):
-            icons = ""
-            if row.get('Missable?') == 'Yes':
-                icons += "⚠️ "
-            if row.get('Collectible?') == 'Yes':
-                icons += "🧩 "
-            if row.get('Grindy?') == 'Yes':
-                icons += "⏳ "
-            return icons + row['Trophy Name']
 
-        session_df_display = session_df.copy()
-        session_df_display['Trophy Name'] = session_df_display.apply(trophy_indicator, axis=1)
-        st.dataframe(session_df_display)
+            with st.expander("Session Trophy Filters", expanded=False):
+                missable = st.checkbox("Show only Missable?", value=False)
+                collectible = st.checkbox("Show only Collectible?", value=False)
+                grindy = st.checkbox("Show only Grindy?", value=False)
+                dlc_only = st.checkbox("Show only DLC trophies?", value=False)
+                filtered_df = all_trophies.copy()
+                if missable and 'Missable?' in filtered_df.columns:
+                    filtered_df = filtered_df[filtered_df['Missable?'] == 'Yes']
+                if collectible and 'Collectible?' in filtered_df.columns:
+                    filtered_df = filtered_df[filtered_df['Collectible?'] == 'Yes']
+                if grindy and 'Grindy?' in filtered_df.columns:
+                    filtered_df = filtered_df[filtered_df['Grindy?'] == 'Yes']
+                if dlc_only and 'DLC' in filtered_df.columns:
+                    filtered_df = filtered_df[filtered_df['DLC'].notna() & (filtered_df['DLC'] != "")]
+                session_trophies = st.multiselect(
+                    "Select trophies for your session:",
+                    filtered_df['Trophy Name'] if 'Trophy Name' in filtered_df.columns else []
+                )
+                session_df = filtered_df[filtered_df['Trophy Name'].isin(session_trophies)] if 'Trophy Name' in filtered_df.columns else pd.DataFrame()
+                session_time = session_df['Estimated Time'].sum() if 'Estimated Time' in session_df.columns else 0
+                st.write(f"Total Session Estimated Time: {session_time} hrs")
 
-        if not session_df.empty:
-            output = BytesIO()
-            session_df.to_excel(output, index=False)
-            output.seek(0)
-            st.download_button("Download Session Plan", data=output.getvalue(), file_name="SessionPlan.xlsx")
+                # --- Time Breakdown by Trophy Category ---
+                if not session_df.empty and 'Trophy Category' in session_df.columns and 'Estimated Time' in session_df.columns:
+                    st.subheader("Session Time Breakdown by Trophy Category")
+                    category_breakdown = session_df.groupby('Trophy Category')['Estimated Time'].sum()
+                    st.bar_chart(category_breakdown)
+
+                if not session_df.empty and 'Game Run Type' in session_df.columns and 'Estimated Time' in session_df.columns:
+                    st.subheader("Session Time Breakdown by Game Run Type")
+                    run_type_breakdown = session_df.groupby('Game Run Type')['Estimated Time'].sum()
+                    st.bar_chart(run_type_breakdown)
+
+                if not session_df.empty and 'Earned?' in session_df.columns:
+                    earned_count = session_df['Earned?'].eq('Yes').sum()
+                    total_count = len(session_df)
+                    st.progress(earned_count / total_count if total_count else 0, text=f"{earned_count}/{total_count} trophies earned in session")
+            # New Section: Session Trophy Notes & Tips
+            if not session_df.empty and 'Trophy Name' in session_df.columns:
+                st.write("Session Trophy Notes & Tips:")
+                for _, row in session_df.iterrows():
+                    notes = row.get("Notes / Tips", "No notes available.")
+                    st.markdown(f"**{row['Trophy Name']}**: {notes}")
+            # New Feature: Trophy Name Indicators
+            def trophy_indicator(row):
+                icons = ""
+                if row.get('Missable?') == 'Yes':
+                    icons += "⚠️ "
+                if row.get('Collectible?') == 'Yes':
+                    icons += "🧩 "
+                if row.get('Grindy?') == 'Yes':
+                    icons += "⏳ "
+                return icons + row['Trophy Name']
+
+            if not session_df.empty and 'Trophy Name' in session_df.columns:
+                session_df_display = session_df.copy()
+                session_df_display['Trophy Name'] = session_df_display.apply(trophy_indicator, axis=1)
+                st.dataframe(session_df_display)
+
+                output = BytesIO()
+                session_df.to_excel(output, index=False)
+                output.seek(0)
+                st.download_button("Download Session Plan", data=output.getvalue(), file_name="SessionPlan.xlsx")
