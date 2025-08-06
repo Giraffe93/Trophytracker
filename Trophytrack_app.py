@@ -245,40 +245,46 @@ if not all_trophies.empty:
 
     elif st.session_state['page'] == "Trophy Details":
         st.markdown("<h2 style='text-align: center;'>🔎 Trophy Details</h2>", unsafe_allow_html=True)
-        trophy_names = all_trophies['Trophy Name'].dropna().unique().tolist()
-        selected_trophy = st.selectbox("Select a Trophy", trophy_names)
-        trophy_row = all_trophies[all_trophies['Trophy Name'] == selected_trophy].iloc[0]
+        if 'Trophy Name' not in all_trophies.columns:
+            st.warning("The required column 'Trophy Name' is missing from your data. Please check your Excel file.")
+        else:
+            trophy_names = all_trophies['Trophy Name'].dropna().unique().tolist()
+            if not trophy_names:
+                st.info("No trophies available to display.")
+            else:
+                selected_trophy = st.selectbox("Select a Trophy", trophy_names)
+                trophy_row = all_trophies[all_trophies['Trophy Name'] == selected_trophy].iloc[0]
 
-        with st.expander("Trophy Info", expanded=True):
-            st.markdown(f"<b>Game:</b> {trophy_row['Game']}", unsafe_allow_html=True)
-            st.markdown(f"<b>Description:</b> {trophy_row['Description']}", unsafe_allow_html=True)
-            st.markdown(f"<b>Type:</b> {trophy_row['Trophy Type']}", unsafe_allow_html=True)
-            st.markdown(f"<b>Earned:</b> {'Yes' if pd.notna(trophy_row['Date Earned']) else 'No'}", unsafe_allow_html=True)
+                with st.expander("Trophy Info", expanded=True):
+                    st.markdown(f"<b>Game:</b> {trophy_row.get('Game', 'N/A')}", unsafe_allow_html=True)
+                    st.markdown(f"<b>Description:</b> {trophy_row.get('Description', 'N/A')}", unsafe_allow_html=True)
+                    st.markdown(f"<b>Type:</b> {trophy_row.get('Trophy Type', 'N/A')}", unsafe_allow_html=True)
+                    st.markdown(f"<b>Earned:</b> {'Yes' if pd.notna(trophy_row.get('Date Earned', None)) else 'No'}", unsafe_allow_html=True)
 
-        if trophy_row.get('Checklist Required', False):
-            with st.expander("Resource Checklist", expanded=True):
-                guide_text = trophy_row.get('Guide', '')
-                items = extract_checklist_items(guide_text)
-                progress = {}
-                if 'Checklist Progress' in trophy_row and pd.notna(trophy_row['Checklist Progress']):
-                    progress = json.loads(trophy_row['Checklist Progress'])
-                updated_progress = {}
-                for item in items:
-                    checked = st.checkbox(item, value=progress.get(item, False))
-                    updated_progress[item] = checked
-                if st.button("Save Checklist Progress"):
-                    save_checklist_progress(selected_trophy, updated_progress)
-                    st.success("Checklist progress saved!")
+                if trophy_row.get('Checklist Required', False):
+                    with st.expander("Resource Checklist", expanded=True):
+                        guide_text = trophy_row.get('Guide', '')
+                        items = extract_checklist_items(guide_text)
+                        progress = {}
+                        if 'Checklist Progress' in trophy_row and pd.notna(trophy_row['Checklist Progress']):
+                            progress = json.loads(trophy_row['Checklist Progress'])
+                        updated_progress = {}
+                        for item in items:
+                            checked = st.checkbox(item, value=progress.get(item, False))
+                            updated_progress[item] = checked
+                        if st.button("Save Checklist Progress"):
+                            save_checklist_progress(selected_trophy, updated_progress)
+                            st.success("Checklist progress saved!")
 
-        with st.expander("Guide Data", expanded=False):
-            st.write(trophy_row.get('Guide', 'No guide available.'))
+                with st.expander("Guide Data", expanded=False):
+                    st.write(trophy_row.get('Guide', 'No guide available.'))
 
-        st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.button("Back")
-        with col2:
-            st.button("Next")
+                st.markdown("<div style='height: 50px;'></div>", unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.button("Back")
+                with col2:
+                    st.button("Next")
     
     # New Section: Session Planning
     st.markdown("<h2 style='text-align: center;'>📅 Session Planning</h2>", unsafe_allow_html=True)
