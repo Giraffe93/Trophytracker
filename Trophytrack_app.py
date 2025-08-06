@@ -294,7 +294,8 @@ if not all_trophies.empty:
         with st.expander("Select Trophies for Session", expanded=True):
             session_trophies = st.multiselect(
                 "Select trophies for your session:",
-                all_trophies['Trophy Name']
+                all_trophies['Trophy Name'],
+                key="main_session_multiselect"
             )
             session_df = all_trophies[all_trophies['Trophy Name'].isin(session_trophies)]
             session_time = session_df['Estimated Time'].sum() if 'Estimated Time' in session_df.columns else 0
@@ -336,7 +337,8 @@ if not all_trophies.empty:
                     filtered_df = filtered_df[filtered_df['DLC'].notna() & (filtered_df['DLC'] != "")]
                 session_trophies = st.multiselect(
                     "Select trophies for your session:",
-                    filtered_df['Trophy Name'] if 'Trophy Name' in filtered_df.columns else []
+                    filtered_df['Trophy Name'] if 'Trophy Name' in filtered_df.columns else [],
+                    key="filtered_session_multiselect"
                 )
                 session_df = filtered_df[filtered_df['Trophy Name'].isin(session_trophies)] if 'Trophy Name' in filtered_df.columns else pd.DataFrame()
                 session_time = session_df['Estimated Time'].sum() if 'Estimated Time' in session_df.columns else 0
