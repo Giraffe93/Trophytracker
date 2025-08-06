@@ -5,7 +5,7 @@ import re
 from io import BytesIO
 import os
 
-EXCEL_FILE = "trophy_tracker.xlsx"
+EXCEL_FILE = "trophy tracker.xlsx"
 
 def load_excel():
     if not os.path.exists(EXCEL_FILE):
@@ -60,15 +60,21 @@ if 'page' not in st.session_state:
 pages = ["Dashboard", "Planning", "Game Night", "Trophy Details"]
 selected_page = st.selectbox("Navigate", pages, index=pages.index(st.session_state['page']))
 
+
 if selected_page != st.session_state['page']:
     st.session_state['page'] = selected_page
-    st.experimental_rerun()
+    st.rerun()
 
 # --- Sync Now button ---
 if st.button("Sync Now"):
-    st.experimental_rerun()
+    st.rerun()
+
 
 all_trophies, game_sheets = load_excel()
+
+# Warn if the Excel file is missing
+if not os.path.exists(EXCEL_FILE):
+    st.warning(f"Excel file '{EXCEL_FILE}' not found. Please upload or create it to use the app.")
 
 if not all_trophies.empty:
     if st.session_state['page'] == "Dashboard":
