@@ -81,52 +81,63 @@ if not all_trophies.empty:
         st.markdown("<h2 style='text-align: center;'>📊 Trophy Tracker Dashboard</h2>", unsafe_allow_html=True)
         total_games = len(game_sheets)
         total_trophies = len(all_trophies)
-        trophies_earned = all_trophies['Date Earned'].notna().sum()
+        # Check for 'Date Earned' column
+        if 'Date Earned' in all_trophies.columns:
+            trophies_earned = all_trophies['Date Earned'].notna().sum()
+        else:
+            trophies_earned = 0
         st.metric("Total Games", total_games)
         st.subheader("Trophy Type Distribution")
-        trophy_counts = all_trophies['Trophy Type'].value_counts()
+        trophy_counts = all_trophies['Trophy Type'].value_counts() if 'Trophy Type' in all_trophies.columns else pd.Series(dtype=int)
         # Limit to top 10 trophy types for performance
         limited_counts = trophy_counts.head(10)
         @st.cache_resource
         def get_pie_chart(data):
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(figsize=(4,4))
+        # Completion Rate by Game
         st.subheader("Completion Rate by Game")
-        completion_by_game = all_trophies.groupby('Game').agg(
-            total_trophies=('Trophy Name', 'count'),
-            earned_trophies=('Date Earned', lambda x: x.notna().sum())
-        )
-        completion_by_game['Completion Rate'] = completion_by_game['earned_trophies'] / completion_by_game['total_trophies']
-        st.bar_chart(completion_by_game['Completion Rate'])
+        if 'Date Earned' in all_trophies.columns:
+            completion_by_game = all_trophies.groupby('Game').agg(
+                total_trophies=('Trophy Name', 'count'),
+                earned_trophies=('Date Earned', lambda x: x.notna().sum())
+            )
+            completion_by_game['Completion Rate'] = completion_by_game['earned_trophies'] / completion_by_game['total_trophies']
+            st.bar_chart(completion_by_game['Completion Rate'])
+        # Trophy Type Distribution Pie
         st.subheader("Trophy Type Distribution")
-        trophy_counts = all_trophies['Trophy Type'].value_counts()
-        st.pyplot(pd.Series(trophy_counts).plot.pie(autopct='%1.1f%%', figsize=(4,4)).get_figure())
-
+        if not trophy_counts.empty:
+            st.pyplot(pd.Series(trophy_counts).plot.pie(autopct='%1.1f%%', figsize=(4,4)).get_figure())
+        # Completion Rate by Game (alternative)
         st.subheader("Completion Rate by Game")
-        completion_by_game = all_trophies.groupby('Game').apply(
-            lambda df: df['Date Earned'].notna().sum() / len(df) if len(df) > 0 else 0
-        )
-        st.bar_chart(completion_by_game)
-
+        if 'Date Earned' in all_trophies.columns:
+            completion_by_game = all_trophies.groupby('Game').apply(
+                lambda df: df['Date Earned'].notna().sum() / len(df) if len(df) > 0 else 0
+            )
+            st.bar_chart(completion_by_game)
         # New Section: Time Tracking
         st.subheader("Time Tracking")
-        total_time = all_trophies['Estimated Time'].sum()
-        earned_time = all_trophies[all_trophies['Date Earned'].notna()]['Estimated Time'].sum()
-        percent_complete = earned_time / total_time if total_time else 0
-        st.progress(percent_complete, text=f"Time Earned: {earned_time} hrs / Total Time: {total_time} hrs")
-
+        if 'Estimated Time' in all_trophies.columns:
+            total_time = all_trophies['Estimated Time'].sum()
+            if 'Date Earned' in all_trophies.columns:
+                earned_time = all_trophies[all_trophies['Date Earned'].notna()]['Estimated Time'].sum()
+            else:
+                earned_time = 0
+            percent_complete = earned_time / total_time if total_time else 0
+            st.progress(percent_complete, text=f"Time Earned: {earned_time} hrs / Total Time: {total_time} hrs")
         # New Time Breakdown Sections
         st.subheader("Time Breakdown by Trophy Category")
-        category_breakdown = all_trophies.groupby('Trophy Category')['Estimated Time'].sum()
-        st.bar_chart(category_breakdown)
-
+        if 'Trophy Category' in all_trophies.columns and 'Estimated Time' in all_trophies.columns:
+            category_breakdown = all_trophies.groupby('Trophy Category')['Estimated Time'].sum()
+            st.bar_chart(category_breakdown)
         st.subheader("Time Breakdown by Game Run Type")
-        run_type_breakdown = all_trophies.groupby('Game Run Type')['Estimated Time'].sum()
-        st.bar_chart(run_type_breakdown)
-
+        if 'Game Run Type' in all_trophies.columns and 'Estimated Time' in all_trophies.columns:
+            run_type_breakdown = all_trophies.groupby('Game Run Type')['Estimated Time'].sum()
+            st.bar_chart(run_type_breakdown)
         st.subheader("Estimated Time Remaining by Game")
-        time_remaining = all_trophies[all_trophies['Date Earned'].isna()].groupby('Game')['Estimated Time'].sum()
-        st.bar_chart(time_remaining)
+        if 'Estimated Time' in all_trophies.columns and 'Date Earned' in all_trophies.columns:
+            time_remaining = all_trophies[all_trophies['Date Earned'].isna()].groupby('Game')['Estimated Time'].sum()
+            st.bar_chart(time_remaining)
 
     elif st.session_state['page'] == "Planning":
         st.markdown("<h2 style='text-align: center;'>📝 Plan Your Session</h2>", unsafe_allow_html=True)
