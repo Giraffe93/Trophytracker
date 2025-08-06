@@ -325,7 +325,8 @@ if not all_trophies.empty:
         if not session_df.empty:
             st.write("Session Trophy Notes & Tips:")
             for _, row in session_df.iterrows():
-                st.markdown(f"**{row['Trophy Name']}**: {row.get('Notes / Tips', 'No notes available.')")
+                notes = row.get("Notes / Tips", "No notes available.")
+                st.markdown(f"**{row['Trophy Name']}**: {notes}")
         
         # New Feature: Trophy Name Indicators
         def trophy_indicator(row):
